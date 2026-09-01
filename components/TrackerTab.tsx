@@ -162,12 +162,8 @@ export default function TrackerTab() {
                                     </div>
                                 </div>
 
-                                <button onClick={handleConfirmTotalClick} disabled={!totalStr || Number(totalStr) <= 0} className="relative w-full overflow-hidden group/btn disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
-                                    <div className="relative flex items-center justify-center py-4 text-white font-bold text-lg tracking-wide rounded-2xl shadow-[0_10px_20px_-10px_rgba(79,70,229,0.8)] transition-all active:scale-[0.98]">
-                                        เริ่มบันทึกยอด <i className="fa-solid fa-arrow-right ml-3 transition-transform group-hover/btn:translate-x-1"></i>
-                                    </div>
+                                <button onClick={handleConfirmTotalClick} disabled={!totalStr || Number(totalStr) <= 0} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(79,70,229,0.8)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group/btn">
+                                    เริ่มบันทึกยอด <i className="fa-solid fa-arrow-right ml-3 transition-transform group-hover/btn:translate-x-1"></i>
                                 </button>
                             </div>
                         </div>
