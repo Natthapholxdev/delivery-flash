@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { getMyDeliveries, editDelivery } from '@/app/actions/deliveries'
-import { format, getMonth, getYear, getDate } from 'date-fns'
+import { format, getDate } from 'date-fns'
 import { th } from 'date-fns/locale'
 import ShadcnModal from '@/components/ui/ShadcnModal'
 import { toast as hotToast } from 'react-hot-toast'
@@ -24,6 +24,7 @@ export default function SummaryTab() {
     const [editCount, setEditCount] = useState<string>('')
     const [editRate, setEditRate] = useState<string>('')
     const [editReason, setEditReason] = useState<string>('')
+    const [expandedDate, setExpandedDate] = useState<string | null>(null)
 
     const fetchRecords = () => {
         setLoading(true)
@@ -49,23 +50,25 @@ export default function SummaryTab() {
         }).sort((a, b) => new Date(b.delivery_date).getTime() - new Date(a.delivery_date).getTime())
     }, [records, selectedMonth, selectedPeriod])
 
-    const { totalItems, totalAmount } = useMemo(() => {
-        return filteredRecords.reduce((acc, r) => {
-            acc.totalItems += r.quantity
-            acc.totalAmount += (r.quantity * Number(r.rate_per_piece))
-            return acc
-        }, { totalItems: 0, totalAmount: 0 })
-    }, [filteredRecords])
+    const totalItems = filteredRecords.reduce((sum, r) => sum + r.quantity, 0)
+    const totalAmount = filteredRecords.reduce((sum, r) => sum + (r.quantity * Number(r.rate_per_piece)), 0)
 
-    // Generate month options based on existing records + current month
-    const monthOptions = useMemo(() => {
-        const months = new Set<string>()
-        months.add(currentMonth)
-        records.forEach(r => {
-            months.add(format(new Date(r.delivery_date), 'yyyy-MM'))
-        })
-        return Array.from(months).sort().reverse()
-    }, [records, currentMonth])
+    const groupedRecords = filteredRecords.reduce((acc, r) => {
+        if (!acc[r.delivery_date]) {
+            acc[r.delivery_date] = []
+        }
+        acc[r.delivery_date].push(r)
+        return acc
+    }, {} as Record<string, typeof filteredRecords>)
+
+    const sortedDates = Object.keys(groupedRecords).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+
+    // Generate last 6 months options
+    const monthOptions = Array.from({ length: 6 }).map((_, i) => {
+        const d = new Date()
+        d.setMonth(d.getMonth() - i)
+        return format(d, 'yyyy-MM')
+    })
 
     const handleEditClick = (record: any) => {
         setEditRecord(record)
@@ -74,39 +77,42 @@ export default function SummaryTab() {
         setEditReason('')
     }
 
-    const confirmEdit = () => {
-        if (!editCount || !editRate || !editReason.trim()) {
-            sonnerToast.error('กรุณากรอกข้อมูลและเหตุผลให้ครบถ้วน')
+    const confirmEdit = async () => {
+        if (!editCount || !editRate) {
+            hotToast.error('กรุณากรอกข้อมูลให้ครบ')
+            return
+        }
+        if (!editReason.trim()) {
+            hotToast.error('กรุณาระบุเหตุผลในการแก้ไข')
             return
         }
 
-        const count = Number(editCount)
-        const rate = Number(editRate)
-
-        const savePromise = editDelivery(editRecord.id, count, rate, editReason).then(res => {
-            if (res.error) throw new Error(res.error)
-            return res
-        })
-
-        hotToast.promise(savePromise, {
-            loading: 'กำลังบันทึกการแก้ไข...',
-            success: 'บันทึกการแก้ไขแล้ว',
-            error: (err) => err.message
-        }).then(() => {
+        const result = await editDelivery(editRecord.id, parseInt(editCount), parseFloat(editRate), editReason)
+        if (result?.error) {
+            sonnerToast.error(result.error)
+        } else {
+            sonnerToast.success('แจ้งแก้ไขสำเร็จ', { description: 'รอแอดมินตรวจสอบ' })
             setEditRecord(null)
-            fetchRecords()
-        }).catch(() => {})
+            fetchRecords() // refresh
+        }
     }
 
-    if (loading) return <div className="flex justify-center p-12"><i className="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500"></i></div>
+    if (loading) return <div className="flex justify-center p-12"><i className="fa-solid fa-circle-notch fa-spin text-indigo-600 text-3xl"></i></div>
 
     return (
-        <div className="space-y-4 pb-20 animate-in fade-in duration-500">
-            {/* Filter Section */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-4">
-                <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
-                    <i className="fa-solid fa-calendar-check text-indigo-500 mr-2"></i> เลือกรอบบิล
-                </h2>
+        <div className="space-y-6">
+            {/* Header / Filter */}
+            <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <i className="fa-solid fa-chart-pie text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-black text-slate-800">สรุปยอดรวม</h2>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Summary Report</p>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                     <div>
                         <select 
@@ -160,31 +166,79 @@ export default function SummaryTab() {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {filteredRecords.map(r => (
-                            <div key={r.id} className="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group relative overflow-hidden transition-all hover:shadow-md">
-                                <div className="absolute left-0 top-3 bottom-3 w-1 bg-indigo-500 rounded-r-full"></div>
-                                <div className="pl-3">
-                                    <div className="flex items-center text-xs text-slate-500 mb-1 font-bold">
-                                        <i className="fa-solid fa-calendar-day text-indigo-400 mr-1.5"></i>
-                                        {format(new Date(r.delivery_date), 'd MMM yy', { locale: th })}
-                                    </div>
-                                    <div className="flex items-center font-black text-slate-700 text-sm mt-1">
-                                        <span className="text-indigo-600">{r.quantity}</span><span className="text-xs text-slate-400 ml-1 mr-2">ชิ้น</span>
-                                        <span className="mx-1 text-slate-200">|</span> 
-                                        <span className="text-xs text-slate-400 ml-2 mr-1">เรต</span><span>฿{r.rate_per_piece}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex flex-col items-end gap-2">
-                                    <div className="text-right bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl">
-                                        <div className="font-black text-emerald-600 text-sm">฿{(r.quantity * Number(r.rate_per_piece)).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
-                                    </div>
-                                    <button onClick={() => handleEditClick(r)} className="text-[10px] text-indigo-500 font-bold hover:text-indigo-700 transition-colors flex items-center px-2 py-1 bg-indigo-50 rounded-md">
-                                        <i className="fa-solid fa-pen mr-1"></i> แจ้งแก้ไข
+                        {sortedDates.map(date => {
+                            const dayRecords = groupedRecords[date];
+                            const dayQuantity = dayRecords.reduce((sum: number, r: any) => sum + r.quantity, 0);
+                            const dayAmount = dayRecords.reduce((sum: number, r: any) => sum + (r.quantity * Number(r.rate_per_piece)), 0);
+                            const isExpanded = expandedDate === date;
+
+                            return (
+                                <div key={date} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-all">
+                                    {/* Header (Click to expand) */}
+                                    <button 
+                                        onClick={() => setExpandedDate(isExpanded ? null : date)}
+                                        className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors relative"
+                                    >
+                                        <div className="absolute left-0 top-3 bottom-3 w-1 bg-indigo-500 rounded-r-full"></div>
+                                        <div className="pl-2 flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                                <i className="fa-solid fa-calendar-day"></i>
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="font-bold text-slate-700 text-sm">
+                                                    {format(new Date(date), 'd MMM yy', { locale: th })}
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-0.5">
+                                                    {dayQuantity} ชิ้น
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <div className="font-black text-emerald-600 text-sm">
+                                                    ฿{dayAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform duration-300 ${isExpanded ? 'bg-indigo-100 text-indigo-600 rotate-180' : 'bg-slate-100 text-slate-400'}`}>
+                                                <i className="fa-solid fa-chevron-down text-xs"></i>
+                                            </div>
+                                        </div>
                                     </button>
+
+                                    {/* Expanded Content */}
+                                    {isExpanded && (
+                                        <div className="bg-slate-50 border-t border-slate-100 p-3 space-y-2">
+                                            {dayRecords.map((r: any) => (
+                                                <div key={r.id} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between group">
+                                                    <div>
+                                                        <div className="flex items-center font-black text-slate-700 text-sm">
+                                                            <span className="text-indigo-600">{r.quantity}</span><span className="text-[10px] text-slate-400 ml-1 mr-2">ชิ้น</span>
+                                                            <span className="mx-1 text-slate-200">|</span> 
+                                                            <span className="text-[10px] text-slate-400 ml-2 mr-1">เรต</span><span>฿{r.rate_per_piece}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1.5">
+                                                        <div className="font-bold text-emerald-600 text-xs">
+                                                            ฿{(r.quantity * Number(r.rate_per_piece)).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEditClick(r);
+                                                            }} 
+                                                            className="text-[10px] text-orange-500 font-bold hover:text-orange-600 transition-colors flex items-center px-2 py-1 bg-orange-50 rounded-md"
+                                                        >
+                                                            <i className="fa-solid fa-pen mr-1"></i> แจ้งแก้ไข
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </div>
