@@ -138,7 +138,7 @@ export default function TrackerTab() {
                         {/* Premium Glow Effect */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
                         
-                        <div className="relative bg-white/90 backdrop-blur-xl shadow-2xl rounded-[2rem] p-8 border border-white/50">
+                        <div className="relative bg-white/90 backdrop-blur-xl shadow-2xl rounded-[2rem] p-8 border border-white/50 mb-24">
                             {/* Animated icon box */}
                             <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-8 shadow-[inset_0_2px_10px_rgba(255,255,255,1),0_10px_20px_-10px_rgba(79,70,229,0.3)] border border-white relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent"></div>
@@ -327,7 +327,7 @@ export default function TrackerTab() {
                 </div>
 
                 {/* Sticky Action Button for Save */}
-                <div className="sticky bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-6 pb-2 px-2 mt-4">
+                <div className="sticky bottom-24 left-0 right-0 z-30 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pt-6 pb-2 px-2 mt-4">
                     <button 
                         onClick={handleSaveClick} 
                         disabled={isPending || currentTotalCount !== targetTotal || targetTotal === 0}
