@@ -142,10 +142,10 @@ export default function TrackerTab() {
                             {/* Animated icon box */}
                             <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-8 shadow-[inset_0_2px_10px_rgba(255,255,255,1),0_10px_20px_-10px_rgba(79,70,229,0.3)] border border-white relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent"></div>
-                                <i className="fa-solid fa-box-open text-4xl text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-indigo-600 drop-shadow-sm"></i>
+                                <i className="fa-solid fa-box-open text-4xl text-blue-600 drop-shadow-sm"></i>
                             </div>
                             
-                            <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 text-center mb-2 tracking-tight">ตั้งยอดวันนี้</h2>
+                            <h2 className="text-3xl font-black text-slate-800 text-center mb-2 tracking-tight">ตั้งยอดวันนี้</h2>
                             <p className="text-slate-500 text-center text-sm mb-8 font-medium">ระบุจำนวนพัสดุทั้งหมดที่คุณจัดส่ง</p>
                             
                             <div className="space-y-6">
@@ -162,7 +162,7 @@ export default function TrackerTab() {
                                     </div>
                                 </div>
 
-                                <button onClick={handleConfirmTotalClick} disabled={!totalStr || Number(totalStr) <= 0} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(79,70,229,0.8)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group/btn">
+                                <button onClick={handleConfirmTotalClick} disabled={!totalStr || Number(totalStr) <= 0} className="w-full bg-blue-600 hover:bg-indigo-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(79,70,229,0.8)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group/btn">
                                     เริ่มบันทึกยอด <i className="fa-solid fa-arrow-right ml-3 transition-transform group-hover/btn:translate-x-1"></i>
                                 </button>
                             </div>
