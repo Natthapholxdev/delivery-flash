@@ -78,6 +78,28 @@ export default function TrackerTab() {
     const [isPending, startTransition] = useTransition()
     const [customRate, setCustomRate] = useState('')
     const [showSaveModal, setShowSaveModal] = useState(false)
+    const [loaded, setLoaded] = useState(false)
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('tracker_draft')
+            if (saved) {
+                const parsed = JSON.parse(saved)
+                if (parsed.date) setDate(parsed.date)
+                if (parsed.totalStr) setTotalStr(parsed.totalStr)
+                if (parsed.isConfirmedTotal !== undefined) setIsConfirmedTotal(parsed.isConfirmedTotal)
+                if (parsed.items) setItems(parsed.items)
+            }
+        } catch(e) {}
+        setLoaded(true)
+    }, [])
+
+    useEffect(() => {
+        if (!loaded) return;
+        localStorage.setItem('tracker_draft', JSON.stringify({
+            date, totalStr, isConfirmedTotal, items
+        }))
+    }, [date, totalStr, isConfirmedTotal, items, loaded])
 
     const targetTotal = Number(totalStr) || 0
 
